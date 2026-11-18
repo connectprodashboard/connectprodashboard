@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConnectPro Solutions — M/M/1 Recruitment System Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════ CSS VARIABLES & RESET ═══════════════════════ */
+:root {
+  --bg-primary: #f4f6fb;
+  --bg-card: #ffffff;
+  --bg-sidebar: #0f172a;
+  --bg-sidebar-active: rgba(56,189,248,0.12);
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-sidebar: #cbd5e1;
+  --text-sidebar-active: #38bdf8;
+  --accent: #0ea5e9;
+  --accent-light: #e0f2fe;
+  --teal: #14b8a6;
+  --green: #22c55e;
+  --green-bg: #dcfce7;
+  --amber: #f59e0b;
+  --amber-bg: #fef3c7;
+  --red: #ef4444;
+  --red-bg: #fee2e2;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+  --sidebar-width: 260px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-card: #1e293b;
+  --bg-sidebar: #020617;
+  --bg-sidebar-active: rgba(56,189,248,0.15);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-sidebar: #94a3b8;
+  --accent-light: #0c4a6e;
+  --border: #334155;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background var(--transition), color var(--transition);
+  line-height: 1.6;
+}
+
+/* ═══════════════════════ SIDEBAR ═══════════════════════ */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  transition: transform var(--transition);
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.sidebar-logo span { color: var(--accent); }
+
+.sidebar-subtitle {
+  font-size: 11px;
+  color: var(--text-sidebar);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.nav-links { padding: 12px 0; flex: 1; }
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  color: var(--text-sidebar);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--text-sidebar-active);
+  background: var(--bg-sidebar-active);
+  border-left-color: var(--accent);
+}
+
+.nav-link .icon { font-size: 16px; width: 20px; text-align: center; }
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-sidebar);
+  font-size: 13px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 8px 0;
+  width: 100%;
+}
+
+.theme-toggle:hover { color: #fff; }
+
+.toggle-track {
+  width: 40px; height: 22px;
+  background: #334155;
+  border-radius: 11px;
+  position: relative;
+  transition: background var(--transition);
+}
+
+.toggle-thumb {
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px; left: 2px;
+  transition: transform var(--transition);
+}
+
+[data-theme="dark"] .toggle-thumb { transform: translateX(18px); }
+[data-theme="dark"] .toggle-track { background: var(--accent); }
+
+/* ═══════════════════════ MOBILE SIDEBAR ═══════════════════════ */
+.menu-btn {
+  display: none;
+  position: fixed;
+  top: 14px; left: 14px;
+  z-index: 1100;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 40px; height: 40px;
+  cursor: pointer;
+  font-size: 20px;
+  box-shadow: var(--shadow);
+  color: var(--text-primary);
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+}
+
+/* ═══════════════════════ MAIN CONTENT ═══════════════════════ */
+.main {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  transition: margin var(--transition);
+}
+
+.top-bar {
+  position: sticky;
+  top: 0;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 32px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(8px);
+}
+
+.top-bar h1 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.top-bar h1 span { color: var(--accent); }
+
+.model-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  background: var(--accent-light);
+  color: var(--accent);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.content { padding: 24px 32px 60px; max-width: 1400px; }
+
+/* ═══════════════════════ SECTION ═══════════════════════ */
+.section {
+  margin-bottom: 32px;
+  scroll-margin-top: 80px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title .sec-icon {
+  width: 32px; height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+/* ═══════════════════════ KPI CARDS ═══════════════════════ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+.kpi-card.blue::before { background: var(--accent); }
+.kpi-card.teal::before { background: var(--teal); }
+.kpi-card.amber::before { background: var(--amber); }
+.kpi-card.red::before { background: var(--red); }
+.kpi-card.green::before { background: var(--green); }
+
+.kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.kpi-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.kpi-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 6px;
+}
+
+.badge-green { background: var(--green-bg); color: #15803d; }
+.badge-amber { background: var(--amber-bg); color: #92400e; }
+.badge-red { background: var(--red-bg); color: #b91c1c; }
+
+[data-theme="dark"] .badge-green { background: rgba(34,197,94,0.15); color: #4ade80; }
+[data-theme="dark"] .badge-amber { background: rgba(245,158,11,0.15); color: #fbbf24; }
+[data-theme="dark"] .badge-red { background: rgba(239,68,68,0.15); color: #f87171; }
+
+/* ═══════════════════════ TOOLTIP ═══════════════════════ */
+.tooltip-wrap { position: relative; cursor: help; }
+
+.tooltip-wrap .tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: normal;
+  width: 220px;
+  text-align: center;
+  z-index: 50;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.tooltip-wrap .tooltip-text::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+
+.tooltip-wrap:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+/* ═══════════════════════ KENDALL TILES ═══════════════════════ */
+.kendall-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.kendall-tile {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  flex: 1;
+  min-width: 140px;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.kendall-tile:hover, .kendall-tile.open {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-lg);
+}
+
+.kendall-symbol {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.kendall-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.kendall-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.3s;
+  opacity: 0;
+}
+
+.kendall-tile.open .kendall-desc { max-height: 200px; opacity: 1; }
+
+.kendall-sep {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--text-secondary);
+}
+
+/* ═══════════════════════ SIMULATOR ═══════════════════════ */
+.sim-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+}
+
+.sim-controls {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.slider-group { margin-bottom: 20px; }
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.slider-val {
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(14,165,233,0.4);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+}
+
+.sim-results {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.sim-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+  gap: 12px;
+}
+
+.sim-metric {
+  padding: 14px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.sim-metric-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.sim-metric-value { font-size: 22px; font-weight: 800; margin-top: 4px; }
+.sim-metric-sub { font-size: 11px; color: var(--text-secondary); }
+
+.warning-box {
+  background: var(--red-bg);
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-theme="dark"] .warning-box { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.3); }
+
+.warning-box.show { display: flex; }
+
+/* ═══════════════════════ CHARTS ═══════════════════════ */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.chart-title { font-size: 14px; font-weight: 700; }
+
+.toggle-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.toggle-btn:hover, .toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.chart-wrap { position: relative; height: 280px; }
+
+/* ═══════════════════════ SCENARIO TABLE ═══════════════════════ */
+.table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  box-shadow: var(--shadow);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  background: var(--bg-primary);
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr:last-child td { border-bottom: none; }
+
+tr:hover td { background: var(--accent-light); }
+
+.improve { color: var(--green); font-weight: 700; font-size: 11px; }
+
+/* ═══════════════════════ TURNOVER PANEL ═══════════════════════ */
+.turnover-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.panel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.panel-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+
+.input-group { margin-bottom: 16px; }
+
+.input-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+
+.input-group input[type="number"] {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border var(--transition);
+}
+
+.input-group input[type="number"]:focus { outline: none; border-color: var(--accent); }
+
+.derived-val {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.derived-label { font-size: 12px; color: var(--text-secondary); }
+
+/* ═══════════════════════ RECOMMENDATION CARDS ═══════════════════════ */
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.rec-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.rec-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+.rec-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.rec-card.r1::before { background: var(--accent); }
+.rec-card.r2::before { background: var(--green); }
+.rec-card.r3::before { background: var(--teal); }
+.rec-card.r4::before { background: var(--amber); }
+
+.rec-icon { font-size: 28px; margin-bottom: 10px; }
+.rec-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.rec-impact { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+.rec-impact.up { color: var(--green); }
+.rec-impact.down { color: var(--accent); }
+.rec-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+/* ═══════════════════════ INSIGHTS ═══════════════════════ */
+.insight-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.insight-box ul { padding-left: 20px; }
+
+.insight-box li {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.insight-box li strong { color: var(--text-primary); }
+
+/* ═══════════════════════ RESPONSIVE ═══════════════════════ */
+@media (max-width: 1024px) {
+  .sim-layout { grid-template-columns: 1fr; }
+  .charts-grid { grid-template-columns: 1fr; }
+  .turnover-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .overlay.show { display: block; }
+  .menu-btn { display: flex; align-items: center; justify-content: center; }
+  .main { margin-left: 0; }
+  .top-bar { padding: 16px 16px 16px 60px; }
+  .content { padding: 16px 16px 60px; }
+  .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .chart-wrap { height: 220px; }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .kendall-row { flex-direction: column; }
+  .kendall-sep { display: none; }
+  .rec-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- MOBILE MENU BUTTON -->
+<button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+<div class="overlay" onclick="toggleSidebar()"></div>
+
+<!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Connect<span>Pro</span></div>
+    <div class="sidebar-subtitle">M/M/1 Queueing Analysis</div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link active" href="#kpi"><span class="icon">📊</span> KPI Dashboard</a>
+    <a class="nav-link" href="#kendall"><span class="icon">🏷️</span> Kendall Notation</a>
+    <a class="nav-link" href="#simulator"><span class="icon">🎛️</span> Simulator</a>
+    <a class="nav-link" href="#charts"><span class="icon">📈</span> Charts</a>
+    <a class="nav-link" href="#scenarios"><span class="icon">⚖️</span> Scenario Comparison</a>
+    <a class="nav-link" href="#turnover"><span class="icon">🔄</span> Turnover &amp; Workload</a>
+    <a class="nav-link" href="#recommendations"><span class="icon">💡</span> Recommendations</a>
+    <a class="nav-link" href="#insights"><span class="icon">🔍</span> Key Insights</a>
+  </div>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span id="theme-icon">🌙</span>
+      <span id="theme-label">Dark Mode</span>
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════ -->
+<div class="main">
+  <div class="top-bar">
+    <h1>ConnectPro <span>Solutions</span></h1>
+    <div class="model-badge">📐 M/M/1 : (∞/∞/FCFS)</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════════════════ 1. KPI CARDS ═══════════════════════ -->
+    <section class="section" id="kpi">
+      <div class="section-title">
+        <div class="sec-icon" style="background:var(--accent-light);color:var(--accent);">📊</div>
+        Baseline Performance Metrics
+      </div>
+      <div class="kpi-grid">
+        <!-- ρ -->
+        <div class="kpi-card blue">
+          <div class="tooltip-wrap">
+            <div class="kpi-label">Utilization (ρ)</div>
+            <span class="tooltip-text">Server utilization: the fraction of time the recruitment specialist is busy. ρ = λ/μ = 8/10 = 0.80</span>
+          </div>
+          <div class="kpi-value">80%</div>
+          <div class="kpi-sub">λ=8 / μ=10</div>
+          <div class="status-badge badge-amber" id="rho-badge">⚠ HIGH UTILIZATION</div>
+        </div>
+        <!-- Ls -->
+        <div class="kpi-card teal">
+          <div class="tooltip-wrap">
+            <div class="kpi-label">Avg. in System (Ls)</div>
+            <span class="tooltip-text">Average number of recruitment requests in the entire system (waiting + being processed). Ls = λ/(μ−λ) = 8/2 = 4</span>
+          </div>
+          <div class="kpi-value">4.00</div>
+          <div class="kpi-sub">requests in system</div>
+        </div>
+        <!-- Lq -->
+        <div class="kpi-card teal">
+          <div class="tooltip-wrap">
+            <div class="kpi-label">Avg. in Queue (Lq)</div>
+            <span class="tooltip-text">Average number of requests waiting in queue before being processed. Lq = λ²/[μ(μ−λ)] = 64/20 = 3.2</span>
+          </div>
+          <div class="kpi-value">3.20</div>
+          <div class="kpi-sub">requests waiting</div>
+        </div>
+        <!-- Ws -->
+        <div class="kpi-card amber">
+          <div class="tooltip-wrap">
+            <div class="kpi-label">Avg. Time in System (Ws)</div>
+            <span class="tooltip-text">Average total time a request spends in the system (waiting + processing). Ws = 1/(μ−λ) = 1/2 = 0.5 weeks</span>
+          </div>
+          <div class="kpi-value">0.50 wk</div>
+          <div class="kpi-sub">= 2.50 working days</div>
+        </div>
+        <!-- Wq -->
+        <div class="kpi-card amber">
+          <div class="tooltip-wrap">
+            <div class="kpi-label">Avg. Wait Time (Wq)</div>
+            <span class="tooltip-text">Average time a request waits in the queue before processing begins. Wq = λ/[μ(μ−λ)] = 8/20 = 0.4 weeks</span>
+          </div>
+          <div class="kpi-value">0.40 wk</div>
+          <div class="kpi-sub">= 2.00 working days</div>
+        </div>
+        <!-- P(N>2) -->
+        <div class="kpi-card red">
+          <div class="tooltip-wrap">
+            <div class="kpi-label">P(N &gt; 2)</div>
+            <span class="tooltip-text">Probability that more than 2 requests are in the system at any time. P(N>n) = ρ^(n+1) = 0.8³ = 0.512</span>
+          </div>
+          <div class="kpi-value">51.20%</div>
+          <div class="kpi-sub">chance of &gt; 2 in system</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ 2. KENDALL NOTATION ═══════════════════════ -->
+    <section class="section" id="kendall">
+      <div class="section-title">
+        <div class="sec-icon" style="background:#ede9fe;color:#7c3aed;">🏷️</div>
+        Kendall Notation Explained
+      </div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Click each tile to learn what it means for ConnectPro's hiring operations.</p>
+      <div class="kendall-row">
+        <div class="kendall-tile" onclick="toggleKendall(this)">
+          <div class="kendall-symbol">M</div>
+          <div class="kendall-name">Arrival Process</div>
+          <div class="kendall-desc"><strong>Markovian (Poisson) arrivals.</strong> Hiring requests arrive randomly and independently at an average rate of λ = 8 per week. No clustering or scheduling — typical of unplanned employee turnover in a BPO.</div>
+        </div>
+        <div class="kendall-sep">/</div>
+        <div class="kendall-tile" onclick="toggleKendall(this)">
+          <div class="kendall-symbol">M</div>
+          <div class="kendall-name">Service Process</div>
+          <div class="kendall-desc"><strong>Markovian (Exponential) service.</strong> The time to fill a position follows an exponential distribution with μ = 10 per week. Recruitment times vary — some roles fill quickly, others take longer.</div>
+        </div>
+        <div class="kendall-sep">/</div>
+        <div class="kendall-tile" onclick="toggleKendall(this)">
+          <div class="kendall-symbol">1</div>
+          <div class="kendall-name">Servers</div>
+          <div class="kendall-desc"><strong>Single server.</strong> ConnectPro employs only one recruitment specialist to handle all replacement hiring requests across the entire organization.</div>
+        </div>
+        <div class="kendall-sep">:</div>
+        <div class="kendall-tile" onclick="toggleKendall(this)">
+          <div class="kendall-symbol">∞</div>
+          <div class="kendall-name">System Capacity</div>
+          <div class="kendall-desc"><strong>Infinite capacity.</strong> There is no limit on how many requests can wait in the queue. No request is ever turned away — they all wait until the specialist can process them.</div>
+        </div>
+        <div class="kendall-sep">/</div>
+        <div class="kendall-tile" onclick="toggleKendall(this)">
+          <div class="kendall-symbol">∞</div>
+          <div class="kendall-name">Population</div>
+          <div class="kendall-desc"><strong>Infinite calling population.</strong> The pool of potential departing employees is treated as effectively unlimited. Any employee can generate a replacement request at any time.</div>
+        </div>
+        <div class="kendall-sep">/</div>
+        <div class="kendall-tile" onclick="toggleKendall(this)">
+          <div class="kendall-symbol">FCFS</div>
+          <div class="kendall-name">Queue Discipline</div>
+          <div class="kendall-desc"><strong>First-Come, First-Served.</strong> Requests are processed in the order they arrive. No priority is given to specific departments or roles — strictly chronological order.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ 3. INTERACTIVE SIMULATOR ═══════════════════════ -->
+    <section class="section" id="simulator">
+      <div class="section-title">
+        <div class="sec-icon" style="background:#fef3c7;color:#d97706;">🎛️</div>
+        Interactive Simulator
+      </div>
+      <div class="sim-layout">
+        <div class="sim-controls">
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Arrival Rate (λ)</span>
+              <span class="slider-val" id="lam-val">8 req/wk</span>
+            </div>
+            <input type="range" id="lam-slider" min="1" max="12" step="0.5" value="8" oninput="updateSim()">
+          </div>
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Service Rate (μ)</span>
+              <span class="slider-val" id="mu-val">10 req/wk</span>
+            </div>
+            <input type="range" id="mu-slider" min="1" max="20" step="0.5" value="10" oninput="updateSim()">
+          </div>
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Servers (c)</span>
+              <span class="slider-val" id="c-val">1</span>
+            </div>
+            <input type="range" id="c-slider" min="1" max="3" step="1" value="1" oninput="updateSim()">
+          </div>
+          <button onclick="resetSim()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-primary);color:var(--text-secondary);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:all var(--transition);">↩ Reset to Baseline</button>
+        </div>
+        <div class="sim-results">
+          <div class="sim-metrics" id="sim-metrics">
+            <!-- filled by JS -->
+          </div>
+          <div class="warning-box" id="sim-warning">
+            ⚠️ <span>System is <strong>UNSTABLE</strong> (ρ ≥ 1). The queue will grow without bound. Add more servers or reduce the arrival rate.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ 4. CHARTS ═══════════════════════ -->
+    <section class="section" id="charts">
+      <div class="section-title">
+        <div class="sec-icon" style="background:#dcfce7;color:#16a34a;">📈</div>
+        Visualizations
+      </div>
+      <div class="charts-grid">
+        <!-- Utilization vs Wait -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Utilization vs. Average Wait Time</div>
+          </div>
+          <div class="chart-wrap"><canvas id="chartUtil"></canvas></div>
+        </div>
+        <!-- Probability Distribution -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title" id="prob-chart-title">Probability Distribution P(N = n)</div>
+            <button class="toggle-btn" id="prob-toggle" onclick="toggleProbChart()">Show Cumulative</button>
+          </div>
+          <div class="chart-wrap"><canvas id="chartProb"></canvas></div>
+        </div>
+        <!-- Scenario Comparison -->
+        <div class="chart-card" style="grid-column: 1 / -1;">
+          <div class="chart-header">
+            <div class="chart-title">Scenario Comparison — Key Metrics</div>
+          </div>
+          <div class="chart-wrap" style="height:320px;"><canvas id="chartScenario"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ 5. SCENARIO TABLE ═══════════════════════ -->
+    <section class="section" id="scenarios">
+      <div class="section-title">
+        <div class="sec-icon" style="background:#fce7f3;color:#db2777;">⚖️</div>
+        Scenario Comparison
+      </div>
+      <div class="table-wrap">
+        <table id="scenario-table">
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>λ</th>
+              <th>μ</th>
+              <th>c</th>
+              <th>ρ</th>
+              <th>Ls</th>
+              <th>Lq</th>
+              <th>Ws (wk / days)</th>
+              <th>Wq (wk / days)</th>
+              <th>Improvement</th>
+            </tr>
+          </thead>
+          <tbody id="scenario-tbody">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ 6. TURNOVER & WORKLOAD ═══════════════════════ -->
+    <section class="section" id="turnover">
+      <div class="section-title">
+        <div class="sec-icon" style="background:#fef9c3;color:#ca8a04;">🔄</div>
+        Turnover &amp; Workload Analysis
+      </div>
+      <div class="turnover-layout">
+        <div class="panel-card">
+          <h4>📌 Current Turnover Context</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div>
+              <div class="derived-val">24%</div>
+              <div class="derived-label">Annual Turnover Rate</div>
+            </div>
+            <div>
+              <div class="derived-val">~1,733</div>
+              <div class="derived-label">Employees (est.)</div>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+            With a 24% annual turnover rate across approximately 1,733 employees, ConnectPro generates
+            roughly <strong>416 replacement requests per year</strong>, translating to about <strong>8 requests per week</strong> (52 working weeks). This arrival rate (λ = 8) is what drives the queueing system.
+          </p>
+        </div>
+        <div class="panel-card">
+          <h4>🧮 What-If Calculator</h4>
+          <div class="input-group">
+            <label>Annual Turnover Rate (%)</label>
+            <input type="number" id="turnover-rate" value="24" min="1" max="100" step="1" oninput="updateTurnover()">
+          </div>
+          <div class="input-group">
+            <label>Total Headcount</label>
+            <input type="number" id="headcount" value="1733" min="10" max="100000" step="10" oninput="updateTurnover()">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">
+            <div>
+              <div class="derived-val" id="derived-annual">416</div>
+              <div class="derived-label">Annual Requests</div>
+            </div>
+            <div>
+              <div class="derived-val" id="derived-weekly">8.00</div>
+              <div class="derived-label">Weekly λ (implied)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ 7. RECOMMENDATIONS ═══════════════════════ -->
+    <section class="section" id="recommendations">
+      <div class="section-title">
+        <div class="sec-icon" style="background:#ecfdf5;color:#059669;">💡</div>
+        Strategic Recommendations
+      </div>
+      <div class="rec-grid">
+        <div class="rec-card r1">
+          <div class="rec-icon">👥</div>
+          <div class="rec-title">Hire a Second Recruitment Specialist</div>
+          <div class="rec-impact down">↑ Capacity: c = 1 → 2</div>
+          <div class="rec-desc">Adding a second server (c=2) with the same μ=10 dramatically reduces congestion. The M/M/2 model yields ρ = 0.40 per server, Lq ≈ 0.15, and Wq ≈ 0.02 weeks (~0.10 days). Queue waiting drops by <strong>95%</strong>.</div>
+        </div>
+        <div class="rec-card r2">
+          <div class="rec-icon">🤝</div>
+          <div class="rec-title">Retention &amp; Workplace Satisfaction Programs</div>
+          <div class="rec-impact up">↓ Arrival Rate: λ = 8 → 6</div>
+          <div class="rec-desc">Reducing turnover from 24% to 18% lowers λ to ~6 requests/week. This cuts ρ to 60%, Ls to 1.5, and Wq to 0.15 weeks (0.75 days) — a <strong>62.5%</strong> reduction in wait time with the same single specialist.</div>
+        </div>
+        <div class="rec-card r3">
+          <div class="rec-icon">💻</div>
+          <div class="rec-title">Applicant Tracking System (ATS)</div>
+          <div class="rec-impact down">↑ Service Rate: μ = 10 → 12</div>
+          <div class="rec-desc">An ATS automates resume screening, interview scheduling, and candidate tracking, boosting μ to 12. This cuts ρ to 66.7%, Ls to 2.0, and Wq to 0.17 weeks (0.83 days) — a <strong>58.3%</strong> reduction in queue wait.</div>
+        </div>
+        <div class="rec-card r4">
+          <div class="rec-icon">🎓</div>
+          <div class="rec-title">Better Benefits &amp; Career Development</div>
+          <div class="rec-impact up">↓ Turnover: 24% → 15–18%</div>
+          <div class="rec-desc">Competitive compensation, training, and clear career paths address root causes of attrition. Even a modest turnover reduction to 18% cuts weekly arrivals by 25%, easing the recruitment bottleneck sustainably.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ 8. KEY INSIGHTS ═══════════════════════ -->
+    <section class="section" id="insights">
+      <div class="section-title">
+        <div class="sec-icon" style="background:#e0f2fe;color:#0284c7;">🔍</div>
+        Key Insights &amp; Interpretation
+      </div>
+      <div class="insight-box">
+        <ul>
+          <li><strong>The system is stable but strained.</strong> With ρ = 80%, the recruitment specialist is busy four out of every five working hours. While technically stable (ρ &lt; 1), there is very little slack to absorb spikes.</li>
+          <li><strong>Requests wait approximately 2 working days.</strong> On average, a hiring request sits in the queue for Wq = 0.4 weeks (2 days) before the specialist even begins processing it. Total time in system is 2.5 days.</li>
+          <li><strong>There is a 51.2% chance of more than 2 requests in the system.</strong> More than half the time, the specialist has a backlog of 3+ open requests, creating pressure and potential burnout.</li>
+          <li><strong>The queue is the bottleneck, not the processing.</strong> Of the 4 average requests in the system (Ls), 3.2 are waiting (Lq = 80% of Ls). The specialist works efficiently once a request is picked up.</li>
+          <li><strong>Small changes in λ or μ have outsized impact.</strong> Due to the nonlinear relationship near ρ = 1, reducing λ by just 2 requests/week (from 8→6) cuts average wait time by over 60%.</li>
+          <li><strong>Adding a second specialist is the most impactful single change</strong>, reducing queue wait by approximately 95%, but comes with ongoing headcount cost. Combining an ATS (↑μ) with retention efforts (↓λ) can achieve similar results.</li>
+          <li><strong>Addressing root-cause turnover is the most sustainable strategy.</strong> Lowering turnover from 24% to 18% not only reduces recruitment workload but also improves institutional knowledge, team stability, and service quality.</li>
+        </ul>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════ THEME TOGGLE ═══════════════════════
+function toggleTheme() {
+  const html = document.documentElement;
+  const dark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', dark ? 'light' : 'dark');
+  document.getElementById('theme-icon').textContent = dark ? '🌙' : '☀️';
+  document.getElementById('theme-label').textContent = dark ? 'Dark Mode' : 'Light Mode';
+  renderCharts();
+}
+
+// ═══════════════════════ SIDEBAR ═══════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.overlay').classList.toggle('show');
+}
+
+// Active nav tracking
+const navLinks = document.querySelectorAll('.nav-link[href]');
+const sections = document.querySelectorAll('.section');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navLinks.forEach(l => {
+    l.classList.remove('active');
+    if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+  });
+});
+
+// Close sidebar on link click (mobile)
+navLinks.forEach(l => l.addEventListener('click', () => {
+  if (window.innerWidth <= 768) toggleSidebar();
+}));
+
+// ═══════════════════════ KENDALL TILES ═══════════════════════
+function toggleKendall(el) { el.classList.toggle('open'); }
+
+// ═══════════════════════ M/M/1 FORMULAS ═══════════════════════
+function mm1(lam, mu) {
+  const rho = lam / mu;
+  if (rho >= 1) return { rho, Ls: Infinity, Lq: Infinity, Ws: Infinity, Wq: Infinity, stable: false };
+  return {
+    rho,
+    Ls: lam / (mu - lam),
+    Lq: (lam * lam) / (mu * (mu - lam)),
+    Ws: 1 / (mu - lam),
+    Wq: lam / (mu * (mu - lam)),
+    stable: true
+  };
+}
+
+// ═══════════════════════ M/M/c FORMULAS (ERLANG C) ═══════════════════════
+function factorial(n) { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+
+function mmc(lam, mu, c) {
+  if (c === 1) return mm1(lam, mu);
+  const a = lam / mu; // offered load
+  const rho = a / c;  // per-server utilization
+  if (rho >= 1) return { rho, Ls: Infinity, Lq: Infinity, Ws: Infinity, Wq: Infinity, stable: false };
+
+  // P0 calculation
+  let sum = 0;
+  for (let n = 0; n < c; n++) {
+    sum += Math.pow(a, n) / factorial(n);
+  }
+  sum += (Math.pow(a, c) / factorial(c)) * (1 / (1 - rho));
+  const P0 = 1 / sum;
+
+  // Erlang C: probability of queuing
+  const Pc = (Math.pow(a, c) / factorial(c)) * (1 / (1 - rho)) * P0;
+
+  // Performance metrics
+  const Lq = Pc * rho / (1 - rho);
+  const Wq = Lq / lam;
+  const Ws = Wq + 1 / mu;
+  const Ls = lam * Ws;
+
+  return { rho, Ls, Lq, Ws, Wq, stable: true, P0, Pc };
+}
+
+// ═══════════════════════ SIMULATOR ═══════════════════════
+function updateSim() {
+  const lam = parseFloat(document.getElementById('lam-slider').value);
+  const mu = parseFloat(document.getElementById('mu-slider').value);
+  const c = parseInt(document.getElementById('c-slider').value);
+
+  document.getElementById('lam-val').textContent = lam + ' req/wk';
+  document.getElementById('mu-val').textContent = mu + ' req/wk';
+  document.getElementById('c-val').textContent = c;
+
+  const m = mmc(lam, mu, c);
+  const warn = document.getElementById('sim-warning');
+
+  if (!m.stable) {
+    warn.classList.add('show');
+    document.getElementById('sim-metrics').innerHTML = buildSimMetrics(m, c);
+    return;
+  }
+  warn.classList.remove('show');
+  document.getElementById('sim-metrics').innerHTML = buildSimMetrics(m, c);
+}
+
+function buildSimMetrics(m, c) {
+  const fmt = (v) => v === Infinity ? '∞' : v.toFixed(2);
+  const days = (v) => v === Infinity ? '∞ days' : (v * 5).toFixed(2) + ' days';
+  const pct = (v) => v === Infinity ? '∞' : (v * 100).toFixed(1) + '%';
+
+  const rhoLabel = c > 1 ? 'ρ (per server)' : 'ρ';
+  const pn2 = m.stable ? Math.pow(m.rho, 3) : 1; // P(N>2) for M/M/1 only as approximation
+
+  let statusClass = 'badge-green', statusText = '✓ LOW';
+  if (!m.stable) { statusClass = 'badge-red'; statusText = '✕ UNSTABLE'; }
+  else if (m.rho >= 0.85) { statusClass = 'badge-red'; statusText = '⚠ CRITICAL'; }
+  else if (m.rho >= 0.7) { statusClass = 'badge-amber'; statusText = '⚠ HIGH'; }
+
+  return `
+    <div class="sim-metric">
+      <div class="sim-metric-label">${rhoLabel}</div>
+      <div class="sim-metric-value">${pct(m.rho)}</div>
+      <div class="status-badge ${statusClass}" style="margin-top:4px;font-size:10px;">${statusText}</div>
+    </div>
+    <div class="sim-metric">
+      <div class="sim-metric-label tooltip-wrap">Ls<span class="tooltip-text">Average number of requests in the system</span></div>
+      <div class="sim-metric-value">${fmt(m.Ls)}</div>
+      <div class="sim-metric-sub">in system</div>
+    </div>
+    <div class="sim-metric">
+      <div class="sim-metric-label tooltip-wrap">Lq<span class="tooltip-text">Average number of requests waiting in queue</span></div>
+      <div class="sim-metric-value">${fmt(m.Lq)}</div>
+      <div class="sim-metric-sub">in queue</div>
+    </div>
+    <div class="sim-metric">
+      <div class="sim-metric-label tooltip-wrap">Ws<span class="tooltip-text">Average time in the system (waiting + service)</span></div>
+      <div class="sim-metric-value">${fmt(m.Ws)} wk</div>
+      <div class="sim-metric-sub">${days(m.Ws)}</div>
+    </div>
+    <div class="sim-metric">
+      <div class="sim-metric-label tooltip-wrap">Wq<span class="tooltip-text">Average time waiting in queue before service</span></div>
+      <div class="sim-metric-value">${fmt(m.Wq)} wk</div>
+      <div class="sim-metric-sub">${days(m.Wq)}</div>
+    </div>
+    <div class="sim-metric">
+      <div class="sim-metric-label tooltip-wrap">Model<span class="tooltip-text">Queueing model type based on selected parameters</span></div>
+      <div class="sim-metric-value" style="font-size:16px;">M/M/${c}</div>
+      <div class="sim-metric-sub">${c === 1 ? 'single server' : c + ' servers'}</div>
+    </div>
+  `;
+}
+
+function resetSim() {
+  document.getElementById('lam-slider').value = 8;
+  document.getElementById('mu-slider').value = 10;
+  document.getElementById('c-slider').value = 1;
+  updateSim();
+}
+
+// ═══════════════════════ CHARTS ═══════════════════════
+let chartUtil, chartProb, chartScenario;
+let showCumulative = false;
+
+function getChartColors() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return {
+    text: dark ? '#94a3b8' : '#64748b',
+    grid: dark ? 'rgba(148,163,184,0.1)' : 'rgba(0,0,0,0.06)',
+    bg: dark ? '#1e293b' : '#ffffff'
+  };
+}
+
+function renderCharts() {
+  const c = getChartColors();
+  renderUtilChart(c);
+  renderProbChart(c);
+  renderScenarioChart(c);
+}
+
+function renderUtilChart(c) {
+  const ctx = document.getElementById('chartUtil').getContext('2d');
+  if (chartUtil) chartUtil.destroy();
+
+  const rhos = [];
+  const waits = [];
+  for (let r = 0.05; r <= 0.95; r += 0.025) {
+    rhos.push(r);
+    waits.push(r / (1 - r)); // Wq * μ = ρ/(1-ρ), showing relative wait
+  }
+
+  const currentIdx = rhos.findIndex(r => r >= 0.8);
+
+  chartUtil = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: rhos.map(r => (r * 100).toFixed(0) + '%'),
+      datasets: [{
+        label: 'Avg. Wait (Wq × μ)',
+        data: waits,
+        borderColor: '#0ea5e9',
+        backgroundColor: 'rgba(14,165,233,0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: rhos.map((_, i) => i === currentIdx ? 7 : 0),
+        pointBackgroundColor: '#ef4444',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        borderWidth: 2.5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `Wait factor: ${ctx.parsed.y.toFixed(2)}`,
+            afterLabel: (ctx) => ctx.dataIndex === currentIdx ? '← Current (ρ=80%)' : ''
+          }
+        },
+        annotation: undefined
+      },
+      scales: {
+        x: { title: { display: true, text: 'Utilization (ρ)', color: c.text }, ticks: { color: c.text, maxTicksLimit: 10 }, grid: { color: c.grid } },
+        y: { title: { display: true, text: 'Relative Wait Time', color: c.text }, ticks: { color: c.text }, grid: { color: c.grid } }
+      }
+    }
+  });
+}
+
+function renderProbChart(c) {
+  const ctx = document.getElementById('chartProb').getContext('2d');
+  if (chartProb) chartProb.destroy();
+
+  const rho = 0.8;
+  const ns = Array.from({length: 11}, (_, i) => i);
+  let data, label;
+
+  if (showCumulative) {
+    data = ns.map(n => Math.pow(rho, n + 1) * 100);
+    label = 'P(N > n) %';
+  } else {
+    data = ns.map(n => (1 - rho) * Math.pow(rho, n) * 100);
+    label = 'P(N = n) %';
+  }
+
+  chartProb = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ns.map(n => 'n=' + n),
+      datasets: [{
+        label,
+        data,
+        backgroundColor: ns.map(n => n <= 2 ? 'rgba(14,165,233,0.7)' : 'rgba(20,184,166,0.7)'),
+        borderColor: ns.map(n => n <= 2 ? '#0ea5e9' : '#14b8a6'),
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => ctx.parsed.y.toFixed(2) + '%' } }
+      },
+      scales: {
+        x: { ticks: { color: c.text }, grid: { display: false } },
+        y: { title: { display: true, text: 'Probability (%)', color: c.text }, ticks: { color: c.text }, grid: { color: c.grid } }
+      }
+    }
+  });
+}
+
+function toggleProbChart() {
+  showCumulative = !showCumulative;
+  const btn = document.getElementById('prob-toggle');
+  const title = document.getElementById('prob-chart-title');
+  if (showCumulative) {
+    btn.textContent = 'Show P(N=n)';
+    btn.classList.add('active');
+    title.textContent = 'Cumulative Probability P(N > n)';
+  } else {
+    btn.textContent = 'Show Cumulative';
+    btn.classList.remove('active');
+    title.textContent = 'Probability Distribution P(N = n)';
+  }
+  renderProbChart(getChartColors());
+}
+
+function renderScenarioChart(c) {
+  const ctx = document.getElementById('chartScenario').getContext('2d');
+  if (chartScenario) chartScenario.destroy();
+
+  const scenarios = computeScenarios();
+  const labels = scenarios.map(s => s.name);
+
+  chartScenario = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Ls', data: scenarios.map(s => s.m.Ls), backgroundColor: 'rgba(14,165,233,0.75)', borderRadius: 6 },
+        { label: 'Lq', data: scenarios.map(s => s.m.Lq), backgroundColor: 'rgba(20,184,166,0.75)', borderRadius: 6 },
+        { label: 'Ws (wk)', data: scenarios.map(s => s.m.Ws), backgroundColor: 'rgba(245,158,11,0.75)', borderRadius: 6 },
+        { label: 'Wq (wk)', data: scenarios.map(s => s.m.Wq), backgroundColor: 'rgba(239,68,68,0.75)', borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: c.text, usePointStyle: true, pointStyle: 'rectRounded' } },
+        tooltip: { callbacks: { label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) } }
+      },
+      scales: {
+        x: { ticks: { color: c.text, font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { color: c.text }, grid: { color: c.grid } }
+      }
+    }
+  });
+}
+
+// ═══════════════════════ SCENARIOS ═══════════════════════
+function computeScenarios() {
+  return [
+    { name: 'Baseline', lam: 8, mu: 10, c: 1, m: mmc(8, 10, 1) },
+    { name: '+ 2nd Specialist', lam: 8, mu: 10, c: 2, m: mmc(8, 10, 2) },
+    { name: 'ATS (μ=12)', lam: 8, mu: 12, c: 1, m: mmc(8, 12, 1) },
+    { name: 'Retention (λ=6)', lam: 6, mu: 10, c: 1, m: mmc(6, 10, 1) }
+  ];
+}
+
+function renderScenarioTable() {
+  const scenarios = computeScenarios();
+  const base = scenarios[0].m;
+  const tbody = document.getElementById('scenario-tbody');
+  tbody.innerHTML = '';
+
+  scenarios.forEach((s, i) => {
+    const m = s.m;
+    const impLs = i === 0 ? '—' : (((base.Ls - m.Ls) / base.Ls) * 100).toFixed(1) + '%';
+    const impLq = i === 0 ? '—' : (((base.Lq - m.Lq) / base.Lq) * 100).toFixed(1) + '%';
+    const impWs = i === 0 ? '—' : (((base.Ws - m.Ws) / base.Ws) * 100).toFixed(1) + '%';
+    const impWq = i === 0 ? '—' : (((base.Wq - m.Wq) / base.Wq) * 100).toFixed(1) + '%';
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><strong>${s.name}</strong></td>
+      <td>${s.lam}</td>
+      <td>${s.mu}</td>
+      <td>${s.c}</td>
+      <td>${(m.rho * 100).toFixed(1)}%</td>
+      <td>${m.Ls.toFixed(2)}</td>
+      <td>${m.Lq.toFixed(2)}</td>
+      <td>${m.Ws.toFixed(2)} / ${(m.Ws * 5).toFixed(2)}</td>
+      <td>${m.Wq.toFixed(2)} / ${(m.Wq * 5).toFixed(2)}</td>
+      <td>${i === 0 ? '<span style="color:var(--text-secondary)">Baseline</span>' :
+        `<span class="improve">↓ Ls ${impLs} · Lq ${impLq} · Ws ${impWs} · Wq ${impWq}</span>`}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+// ═══════════════════════ TURNOVER CALCULATOR ═══════════════════════
+function updateTurnover() {
+  const rate = parseFloat(document.getElementById('turnover-rate').value) || 0;
+  const hc = parseFloat(document.getElementById('headcount').value) || 0;
+  const annual = Math.round(hc * rate / 100);
+  const weekly = (annual / 52).toFixed(2);
+  document.getElementById('derived-annual').textContent = annual.toLocaleString();
+  document.getElementById('derived-weekly').textContent = weekly;
+}
+
+// ═══════════════════════ INIT ═══════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  updateSim();
+  renderCharts();
+  renderScenarioTable();
+});
+</script>
+</body>
+</html>
